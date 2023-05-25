@@ -399,12 +399,14 @@ def serial_timer_transmit(fps, ser, joint_angles):
   serial_period = 1.0/fps    
 
   if (time.time() - serial_timestamp) > serial_period:
-      if (args.enable_serial):
-        transmit_angles_serial(ser,joint_angles)
-
+  
       joint_angles = joint_angles.astype(int)
       joint_angles = np.clip(joint_angles, 0, 255) # Clip to 8 bit values
   
+      if (args.enable_serial):
+        transmit_angles_serial(ser,joint_angles)
+
+      
       print(joint_angles)
       print("Serial FPS: ", 1.0/(time.time()-serial_timestamp))
 
