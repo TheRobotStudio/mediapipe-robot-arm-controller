@@ -157,6 +157,7 @@ def calculate_finger_angles(joint_angles, joint_xyz):
 
 
 def drawDebugViews(results, hand_points, hcp, hncp, hand_points_norm, pitchmode):
+  
   # Create images for the 3 planar projection views
   window_size = 256
   xaxis = np.zeros((window_size, window_size, 3), np.uint8)
@@ -666,6 +667,11 @@ with mp_holistic.Holistic(
         cv2.putText(flipped_image, "Sh Yaw:{:.2f} Pit:{:.2f} Roll:{:.2f}".format(right_shoulder_yaw, right_shoulder_pitch, right_shoulder_roll), (int(image.shape[1] - screen_right_shoulder.x * image.shape[1]), int(screen_right_shoulder.y * image.shape[0])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, visibilityToColour(screen_right_shoulder.visibility), 1, cv2.LINE_AA)
 
 
+    # Show serial status
+    if (serial_muted):
+      # Draw message at top right of screen to indicate serial is off
+      cv2.rectangle(flipped_image, (image.shape[1]-200, 0), (image.shape[1], 40), (0, 0, 0), -1)
+      cv2.putText(flipped_image, "Serial: OFF", (image.shape[1]-200, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
 
 
     # Debug output
@@ -696,9 +702,7 @@ with mp_holistic.Holistic(
     # check for space bar to toggle serial mute
     elif key == 32:
        serial_muted = not serial_muted
-       print("Serial muted: {}".format(serial_muted))
-
-
+       
 # Clean up camera and windows
 cvcam.stop()
 cv2.destroyAllWindows()
