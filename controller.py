@@ -392,6 +392,7 @@ def transmit_angles_serial(ser,joint_angles):
 # Initialize the timestamp with current time
 serial_timestamp = time.time()
 serial_muted = False
+hold_arm_angles = False
 
 # Periodic serial transmit function - maintains a maximum transmit rate
 # specified in arguments to the program
@@ -612,11 +613,12 @@ with mp_holistic.Holistic(
         # Grab our points of interest for easy access
         right_elbow_angle,right_shoulder_yaw,right_shoulder_pitch,right_shoulder_roll,pitchmode = calculate_pose_angles(results.pose_world_landmarks)
 
-        joint_angles[19] = right_shoulder_pitch
-        joint_angles[20] = right_shoulder_yaw
-        joint_angles[21] = right_shoulder_roll + 180
-        joint_angles[22] = right_elbow_angle
-    
+        if not hold_arm_angles:
+          joint_angles[19] = right_shoulder_pitch
+          joint_angles[20] = right_shoulder_yaw
+          joint_angles[21] = right_shoulder_roll + 180
+          joint_angles[22] = right_elbow_angle
+      
     # Check to see if the data frame is valid
     is_valid_frame = results.pose_landmarks is not None and results.right_hand_landmarks is not None
 
@@ -673,6 +675,11 @@ with mp_holistic.Holistic(
       cv2.rectangle(flipped_image, (image.shape[1]-200, 0), (image.shape[1], 40), (0, 0, 0), -1)
       cv2.putText(flipped_image, "Serial: OFF", (image.shape[1]-200, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
 
+    if (hold_arm_angles):
+      # Draw message at top right of screen to indicate serial is off
+      cv2.rectangle(flipped_image, (image.shape[1]-200, 0), (image.shape[1], 40), (0, 0, 0), -1)
+      cv2.putText(flipped_image, "Arm: Hold", (image.shape[1]-200, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 1, cv2.LINE_AA)
+
 
     # Debug output
     if (is_valid_frame and show_debug_views):
@@ -702,6 +709,9 @@ with mp_holistic.Holistic(
     # check for space bar to toggle serial mute
     elif key == 32:
        serial_muted = not serial_muted
+    # hold arm angles?
+    elif key == ord('a'):
+      hold_arm_angles = not hold_arm_angles
        
 # Clean up camera and windows
 cvcam.stop()
