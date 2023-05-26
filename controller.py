@@ -390,12 +390,15 @@ def transmit_angles_serial(ser,joint_angles):
 
 # Initialize the timestamp with current time
 serial_timestamp = time.time()
+serial_muted = False
 
 # Periodic serial transmit function - maintains a maximum transmit rate
 # specified in arguments to the program
 def serial_timer_transmit(fps, ser, joint_angles):
 
   global serial_timestamp
+  global serial_muted
+
   serial_period = 1.0/fps    
 
   if (time.time() - serial_timestamp) > serial_period:
@@ -403,7 +406,7 @@ def serial_timer_transmit(fps, ser, joint_angles):
       joint_angles = joint_angles.astype(int)
       joint_angles = np.clip(joint_angles, 0, 255) # Clip to 8 bit values
   
-      if (args.enable_serial):
+      if (args.enable_serial and not serial_muted):
         transmit_angles_serial(ser,joint_angles)
 
       
@@ -429,6 +432,7 @@ parser.add_argument('--serial-fps', type=int, default=20, help='Set serial port 
 parser.add_argument('--lpf-value', type=float, default=0.25, help='Low pass filter value (default=0.25). 1.0 = no filtering')
 args = parser.parse_args()
 show_debug_views = not args.nodebug
+
 
 # Start serial port if requested
 if args.enable_serial:
@@ -689,6 +693,10 @@ with mp_holistic.Holistic(
         cv2.destroyWindow('YZ Plane (Side View)')
         cv2.destroyWindow('XZ Plane (Top View)')
         cv2.destroyWindow('XY Plane (Front View)')
+    # check for space bar to toggle serial mute
+    elif key == 32:
+       serial_muted = not serial_muted
+       print("Serial muted: {}".format(serial_muted))
 
 
 # Clean up camera and windows
