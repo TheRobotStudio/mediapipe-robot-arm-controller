@@ -554,20 +554,36 @@ with mp_holistic.Holistic(
 
       # Use normalized points to calculate hand rotation in the Y=0 plane
       index = hand_points_norm[mp_hand.HandLandmark.INDEX_FINGER_MCP]
-      pinky = hand_points_norm[mp_hand.HandLandmark.PINKY_MCP]
-      zaxis = hand_points_norm[mp_hand.HandLandmark.PINKY_MCP] + np.array([0.0,0.0,1.0])
-      rel = index - pinky
+      ring = hand_points_norm[mp_hand.HandLandmark.RING_FINGER_MCP]
+      xaxis = hand_points_norm[mp_hand.HandLandmark.PINKY_MCP] + np.array([1.0,0.0,0.0])
+      rel = index - ring
+
+      # Arm direciton - uses non-normalized points
+      arm_direction = hand_points[mp_hand.HandLandmark.INDEX_FINGER_MCP] - hand_points[mp_hand.HandLandmark.WRIST]
 
       # Depending on which side of the hand the thumb is on, the angle will be positive or negative
-      # These angles are set up to mimic the results from the previous demo, but can be adjusted if needed
-      wrist_rotation = 180-angle(
+      wrist_rotation = angle(
         np.array([index[0], index[2]]),
-        np.array([pinky[0], pinky[2]]),
-        np.array([zaxis[0], zaxis[2]]))
+        np.array([ring[0], ring[2]]),
+        np.array([xaxis[0], xaxis[2]]))
 
-      if (rel[0] < 0): # Look at X axis direction beteen index finger mcp and pinky to determine direction of hand
-        wrist_rotation = 360-wrist_rotation
+      if (rel[2] < 0): # Look at Z axis direction beteen index finger mcp and pinky to determine direction of hand
+        
+        # This is a bit of a cheat to prevent some bad angles occuring at extreme angles when the 
+        # arm is pointed toward the left side of the body
+        
+        if (arm_direction[0] <= 0): # If hand is pointed to the right, allow full range of motion
+          wrist_rotation = -wrist_rotation
+        else: # If hand is pointed to the left, avoid weird angles if wrist is over rotated
+          if (wrist_rotation < 90.0):
+            wrist_rotation = -wrist_rotation
+          else:
+            wrist_rotation = 179.9  # Clamp
 
+      wrist_rotation = 180+wrist_rotation # Move values to usable positive range
+
+      # Scale degress (0-360) to 8-bit range (0-255)
+      wrist_rotation = wrist_rotation/360.0*255.0
 
       # Calculate finger joint angles
       hand_angles = calculate_finger_angles(joint_angles, hand_points_norm)
@@ -661,8 +677,9 @@ with mp_holistic.Holistic(
         cv2.putText(flipped_image, "Elb: {:.2f}".format(right_elbow_angle), (5+int(image.shape[1] - screen_right_elbow.x * image.shape[1]), int(screen_right_elbow.y * image.shape[0])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, visibilityToColour(screen_right_elbow.visibility), 1, cv2.LINE_AA)
 
         # Wrist
-        cv2.rectangle(flipped_image, (int(image.shape[1] - screen_right_wrist.x * image.shape[1]) + 5, int(screen_right_wrist.y * image.shape[0]) - 15), (int(image.shape[1] - screen_right_wrist.x * image.shape[1]) + 100, int(screen_right_wrist.y * image.shape[0]) + 5), (0, 0, 0), -1)
-        cv2.putText(flipped_image, "Wri: {:.2f}".format(wrist_rotation), (5+int(image.shape[1] - screen_right_wrist.x * image.shape[1]), int(screen_right_wrist.y * image.shape[0])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, visibilityToColour(screen_right_wrist.visibility), 1, cv2.LINE_AA)
+        scaled = wrist_rotation*360.0/255.0
+        cv2.rectangle(flipped_image, (int(image.shape[1] - screen_right_wrist.x * image.shape[1]) + 5, int(screen_right_wrist.y * image.shape[0]) - 15), (int(image.shape[1] - screen_right_wrist.x * image.shape[1]) + 200, int(screen_right_wrist.y * image.shape[0]) + 5), (0, 0, 0), -1)
+        cv2.putText(flipped_image, "Wri: {:.2f} Deg: {:.2f}".format(wrist_rotation,scaled), (5+int(image.shape[1] - screen_right_wrist.x * image.shape[1]), int(screen_right_wrist.y * image.shape[0])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, visibilityToColour(screen_right_wrist.visibility), 1, cv2.LINE_AA)
         
         # Shoulder
         cv2.rectangle(flipped_image, (int(image.shape[1] - screen_right_shoulder.x * image.shape[1]) + 5, int(screen_right_shoulder.y * image.shape[0]) - 15), (int(image.shape[1] - screen_right_shoulder.x * image.shape[1]) + 250, int(screen_right_shoulder.y * image.shape[0]) + 5), (0, 0, 0), -1)
