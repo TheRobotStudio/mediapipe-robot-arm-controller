@@ -7,12 +7,59 @@ import opencv_cam
 import depthai_cam
 import struct
 import time
+import socket
+import selectors
+import types
+
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_pose = mp.solutions.pose
 mp_hand = mp.solutions.hands
 mp_holistic = mp.solutions.holistic
+
+
+# Socket comms handlers for connection to Isaac Sim
+sel = selectors.DefaultSelector()
+
+def start_connection(host, port):
+    addr = (host, port)
+    print('attempting socket connection to', addr)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+      sock.connect(addr)
+      print("Socket connected to HOPE Demo")
+    except ConnectionRefusedError:
+      print('ERROR: Socket connection to demo refused. Ensure HOPE Demo is running.')
+      print('Disabling socket comms for this session.')
+      args.disable_socket = True
+    
+
+    sock.setblocking(False)
+    events = selectors.EVENT_READ | selectors.EVENT_WRITE
+    data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
+    sel.register(sock, events, data=data)
+
+def service_connection(key, mask):
+    sock = key.fileobj
+    data = key.data
+
+    if mask & selectors.EVENT_READ:
+        recv_data = sock.recv(1024)  # Should be ready to read
+        if recv_data:
+            print('received', repr(recv_data), 'from connection', data.addr)
+            data.outb += recv_data
+        else:
+            print('closing connection to', data.addr)
+            sel.unregister(sock)
+            sock.close()
+    if mask & selectors.EVENT_WRITE:
+        if data.outb:
+            print('sending', repr(data.outb), 'to connection', data.addr)
+            sent = sock.send(data.outb)  # Should be ready to write
+            data.outb = data.outb[sent:]
+
+
 
 def visibilityToColour(vis):
   if (vis < 0.5):
@@ -77,11 +124,13 @@ def calculate_pose_angles(pose_world_landmarks):
   right_hip = pose_world_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
 
   # Calculate the angle of the right elbow joint in the Z=0 plane (Front View)
- # right_elbow_angle = angle(np.array([right_shoulder.x, right_shoulder.y]), np.array([right_elbow.x, right_elbow.y]),
-  # np.array([right_wrist.x, right_wrist.y]))
-  right_elbow_angle = angle(np.array([right_shoulder.x, right_shoulder.y, right_shoulder.z]),
-                                     np.array([right_elbow.x, right_elbow.y, right_elbow.z]),
-                                     np.array([right_wrist.x, right_wrist.y, right_wrist.z]))
+  right_elbow_angle = angle(
+     np.array([right_shoulder.x, right_shoulder.y]), 
+     np.array([right_elbow.x, right_elbow.y]),
+     np.array([right_wrist.x, right_wrist.y]))
+  #right_elbow_angle = angle(np.array([right_shoulder.x, right_shoulder.y, right_shoulder.z]),
+  #                                  np.array([right_elbow.x, right_elbow.y, right_elbow.z]),
+  #                                   np.array([right_wrist.x, right_wrist.y, right_wrist.z]))
 
   # Invert angle to match robot arm 170 by trial and error
   right_elbow_angle = 170.0 - right_elbow_angle
@@ -408,7 +457,7 @@ def serial_timer_transmit(fps, ser, joint_angles):
       joint_angles = joint_angles.astype(int)
       joint_angles = np.clip(joint_angles, 0, 255) # Clip to 8 bit values
   
-      if (args.enable_serial and not serial_muted):
+      if (not args.disable_serial and not serial_muted):
         transmit_angles_serial(ser,joint_angles)
 
       
@@ -417,6 +466,34 @@ def serial_timer_transmit(fps, ser, joint_angles):
 
       # Reset timer    
       serial_timestamp = time.time()
+
+
+# Periodic serial transmit function - maintains a maximum transmit rate
+# specified in arguments to the program
+def socket_timer_transmit(joint_angles):
+  # Make sure socket comms are enabled
+  if (not args.disable_socket):
+
+    joint_angles = joint_angles.astype(int)
+    joint_angles = np.clip(joint_angles, 0, 255) # Clip to 8 bit values
+    
+    
+    events = sel.select(timeout=1)
+    if events:
+      for key, mask in events:
+
+          data = key.data
+
+          # Pack the angles into a byte array          
+          data.outb += struct.pack('23B', *joint_angles)
+          
+          service_connection(key, mask)
+    
+          print(joint_angles)
+    # Check for a socket being monitored to continue.
+    #if not sel.get_map():
+    #  break
+
   
 # Read command line arguments
 parser = argparse.ArgumentParser()
@@ -428,16 +505,17 @@ parser.add_argument('--webcam-capture-width', type=int, default=1920, help='Set 
 parser.add_argument('--webcam-capture-height', type=int, default=1080, help='Set webcam capture height (default=1080)')
 parser.add_argument('--preview-width', type=int, default=1280, help='Set preview width (default=1280)')
 parser.add_argument('--preview-height', type=int, default=720, help='Set preview height (default=720)')
-parser.add_argument('--enable-serial', action='store_false', help='Enable serial port output')
+parser.add_argument('--disable-serial', action='store_true', help='Disable serial port output')
 parser.add_argument('--serial-port', type=str, default='COM4', help='Set serial port (default=COM4)')
 parser.add_argument('--serial-fps', type=int, default=20, help='Set serial port output frequency (default=20)')
+parser.add_argument('--disable-socket', action='store_true', help='Disable socket output')
 parser.add_argument('--lpf-value', type=float, default=0.25, help='Low pass filter value (default=0.25). 1.0 = no filtering')
 args = parser.parse_args()
 show_debug_views = not args.nodebug
 
 
 # Start serial port if requested
-if args.enable_serial:
+if not args.disable_serial:
   import serial
   ser = serial.Serial(
         port=args.serial_port,
@@ -452,6 +530,12 @@ if args.enable_serial:
     )
 else:
   ser = None
+
+# Start socket if requested
+if not args.disable_socket:
+   host = '127.0.0.1'
+   port = 65432
+   start_connection(host, port)
 
 
 
@@ -490,11 +574,12 @@ with mp_holistic.Holistic(
       # If loading a video, use 'break' instead of 'continue'.
       continue
 
-    # See if it's time to send serial data - Note: We do this in two places to try avoid
+    # See if it's time to send serial/socket data - Note: We do this in two places to try avoid
     # beat pattern of computation because of the FPS. In the future, this should
     # be threaded or done in a separate process.
     if (is_valid_frame):
       serial_timer_transmit(args.serial_fps, ser, joint_angles)
+      socket_timer_transmit(joint_angles)
 
     # To improve performance, optionally mark the image as not writeable to
     # pass by reference.
@@ -648,6 +733,7 @@ with mp_holistic.Holistic(
 
       # Send updated serial data
       serial_timer_transmit(args.serial_fps, ser, joint_angles)
+      socket_timer_transmit(joint_angles)
 
     # Calculate a point to approximate the center of the torso at the midpoint between the left shoulder and right hip
     if results.pose_landmarks is not None:
