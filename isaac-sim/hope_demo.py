@@ -44,7 +44,6 @@ def service_connection(key, mask):
                 #print('received', len(recv_data), 'bytes from', data.addr)
                 #print(recv_data)
                 receive_buffer.extend(recv_data)
-                print('receive_buffer:', len(receive_buffer))
                 while len(receive_buffer) >= 23:
                     # Send the first 23 bytes to the unpacker
                     unpackAngleDataToSim(receive_buffer[:23])
@@ -76,11 +75,20 @@ def unpackAngleDataToSim(angleBytes):
     # from the values output for the hardware into the values for the joint angles in the simulator.
     # In the future, once proper controls are established, these should be unified and this step
     # will not be necessary.
-    dof_angles[0] = -np.deg2rad(unpacked[19])
-    dof_angles[1] = -np.deg2rad(unpacked[20])
-    dof_angles[2] = np.deg2rad(180-unpacked[21])
-    dof_angles[3] = np.deg2rad(unpacked[22])
-    print('dof_angles[2]:', np.rad2deg(dof_angles[2]))
+
+    # Shoulder (pitch, yaw, roll = angles 19,20,21)
+    dof_angles[0] = -np.deg2rad(unpacked[19]) # Revolute 1
+    dof_angles[1] = -np.deg2rad(unpacked[20]) # Revolute 2
+    dof_angles[2] = np.deg2rad(180-unpacked[21]) # Revolute 3
+
+    # Elbow
+    dof_angles[3] = np.deg2rad(unpacked[22]) # Revolute 4
+
+    # Wrist (pitch, yaw roll = angles 16,17,18)
+    dof_angles[4] = np.deg2rad(unpacked[18]-180) # Revolute 5
+    dof_angles[5] = np.deg2rad(unpacked[16]-90) # Revolute 6
+    dof_angles[6] = np.deg2rad(unpacked[17]-90) # Revolute 7
+    #print('Wrist yaw:', np.rad2deg(dof_angles[6])) # Revolute 7
     
     #print(unpacked)
 
