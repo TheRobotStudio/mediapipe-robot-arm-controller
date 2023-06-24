@@ -1,3 +1,7 @@
+# Configuration
+USDPath = "C:/Dev/mediapipe-robot-arm-controller-trs/isaac-sim/Collected_HOPE1_02/HOPE1_02.usd"
+
+
 #launch Isaac Sim before any other imports
 #default first two lines in any standalone application
 from omni.isaac.kit import SimulationApp
@@ -92,7 +96,6 @@ lsock.setblocking(False)
 sel.register(lsock, selectors.EVENT_READ, data=None)
 
 # Load the HOPE stage
-USDPath = "C:/Users/tshum/Documents/Omiverse-Tutorials/Collected_HOPE1_02/HOPE1_02.usd"
 open_stage(USDPath)
 stage=omni.usd.get_context().get_stage()
 
