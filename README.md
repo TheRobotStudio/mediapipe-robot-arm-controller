@@ -66,9 +66,9 @@ $ python controller.py --force-webcam --webcam-capture-width 1280 --webcam-captu
 ```
 
 ## Serial Communication
-The demo contains the code from the original demo which packs the 23 DOF angles into an integer array and transmits over a serial port of choice. Because the demo won't run without a proper serial port, this function is disabled by default, and has to be enabled on the command -line.
+The demo contains the code from the original demo which packs the 23 DOF angles into an integer array and transmits over a serial port of choice. Because the demo won't run without a proper serial port, this function can be disabled while running.
 
-- **enable-serial** - Turns on the serial comms
+- **disable-serial** - Disables the serial comms
 - **serial-port** - Sets the serial port (defaults to COM15 as per original demo)
 
 The demo defaults to a serial transmission rate of 10hz (fps). This can be adjusted as follows:
@@ -93,6 +93,15 @@ This will display a result similar to this
 COM4 - Standard Serial over Bluetooth link (COM4)
 COM3 - Standard Serial over Bluetooth link (COM3)
 ```
+
+## Socket Communication to Isaac Sim
+This demo can also stream angles to an demo script running in Isaac Sim on the same machine via a local TCP socket (defaults to using localhost / 127.0.0.1, port 65432). The script will attempt a socket connection when it is executed. If the demo is running on Isaac a connection will be established, otherwise the comms will be disabled automatically. So, you should be able to run with or without the companion Isaac demo. 
+
+However, if you wish to disable this socket connection attempt, you can turn it off with the following flag:
+
+- **disable-socket** - Disables the socket comms
+
+
 
 ## Low Pass Filter
 By default, a low pass filter is applied to the data read from the skeleton joints to reduce jitter. The amount of filtering can be overriden with a command line parameter:
