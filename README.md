@@ -166,7 +166,17 @@ If the link is successful, windows should output something like this, but with y
 Hardlink created for extension_examples\user_examples\hope_demo.py <<===>> c:\dev\mediapipe-robot-arm-controller-trs\isaac-sim\hope_demo.py
 ```
 
-## Step 4: Run the demo
+## Step 4: Edit the script to point at your data
+The top of the .py file contains the path to the HOPE USD file - you will need to edit this to match where your GitHub project lives on your local filesystem:
+
+```
+# Configuration
+USDPath = "C:/Dev/mediapipe-robot-arm-controller-trs/isaac-sim/Collected_HOPE1_02/HOPE1_02.usd"
+```
+
+Set that USDPath to match your data file and save the script.
+
+## Step 5: Run the demo
 
 Now, from your root Isaac Sim folder, you can run the demo script as follows:
 ```
