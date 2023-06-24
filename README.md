@@ -130,3 +130,57 @@ With the demo active, you can press the following keys to perform actions:
 - **d** - Toggle debug views on and off
 
 
+# Isaac Sim Script and Integration (Experimental)
+**The instructions below are my best current understanding of how Isaac Sim works and how projects are structured. I am certain this is probably wrong in many ways, and we'll discover better ways to package and distribute packages, but this should at least get the demo running for exploration**
+
+The instructions below assume running Isaac Sim on Windows. I will update Linux instructions down the road. 
+
+## Step 1: Identify where Isaac Sim is installed
+
+Installing and launching the App will require the path to the Isaac Sim installation on your system. In a typical install, this will be something like this:
+```
+C:\Users\tshum\AppData\Local\ov\pkg\isaac_sim-2022.2.1
+```
+
+## Step 2: Using python.bat to run Isaac scripts
+
+Isaac Sim has it's own Python interpreter that needs to be used to launch scripts interacting with the Sim. This file is located in the root of the Isaac Sim folder. For windows, it is called **python.bat**. You will run this from your Isaac Sim root folder:
+```
+cd C:\Users\tshum\AppData\Local\ov\pkg\isaac_sim-2022.2.1
+python.bat <python script>
+```
+
+## Step 3: Symbolic link to the demo script
+
+The easiest way to keep the script in sync with changes from GitHub is to create a symbolic link of the script into the ```extension_examples\user_examples``` folder of your Isaac install. There are likely better ways to package this up in the future, but for now, we just install it as an example. 
+
+You will want to symlink the ```isaac-sim\hope_demo.py``` script from your GitHub repo into this folder. 
+
+This can be done on Windows as follows (from the root of your Isaac Sim install folder as above). **Replace the folder in [] with your local github folder.**
+```
+C:\Users\tshum\AppData\Local\ov\pkg\isaac_sim-2022.2.1>
+mklink /H extension_examples\user_examples\hope_demo.py [c:\dev\mediapipe-robot-arm-controller-trs]\isaac-sim\hope_demo.py
+```
+If the link is successful, windows should output something like this, but with your paths:
+```
+Hardlink created for extension_examples\user_examples\hope_demo.py <<===>> c:\dev\mediapipe-robot-arm-controller-trs\isaac-sim\hope_demo.py
+```
+
+## Step 4: Run the demo
+
+Now, from your root Isaac Sim folder, you can run the demo script as follows:
+```
+C:\Users\tshum\AppData\Local\ov\pkg\isaac_sim-2022.2.1>python.bat extension_examples/user_examples/hope_demo.py
+```
+
+This should open an Isaac Sim window. After that, you can launch the MediaPipe demo (**controller.py**) just as you normally do, but it should indicate that it has established a socket connection when it runs. **You should use your regular python venv for the MediaPipe demo to run it and not python.bat as it requires the dependencies from that venv, so they will be run in separate command prompts**
+
+Note that if you don't have a physical robot connection, you should specify **--disable-serial** to avoid having the program hang waiting on serial.
+```
+(mp_env) C:\Dev\mediapipe-robot-arm-controller-trs>python controller.py [--disable-serial]
+
+attempting socket connection to ('127.0.0.1', 65432)
+Socket connected to HOPE Demo
+```
+
+
