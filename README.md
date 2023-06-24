@@ -167,7 +167,7 @@ Hardlink created for extension_examples\user_examples\hope_demo.py <<===>> c:\de
 ```
 
 ## Step 4: Edit the script to point at your data
-The top of the .py file contains the path to the HOPE USD file - you will need to edit this to match where your GitHub project lives on your local filesystem:
+The top of the hope_demo.py file contains the path to the HOPE USD file - you will need to edit this to match where your GitHub project lives on your local filesystem:
 
 ```
 # Configuration
