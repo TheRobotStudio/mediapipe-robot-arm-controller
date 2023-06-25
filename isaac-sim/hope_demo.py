@@ -85,61 +85,54 @@ def unpackAngleDataToSim(angleBytes):
     dof_angles[3] = np.deg2rad(unpacked[22]) # Revolute 4
 
     # Wrist (pitch, yaw roll = angles 16,17,18)
-    dof_angles[4] = np.deg2rad(unpacked[18]-180) # Revolute 5
-    dof_angles[5] = np.deg2rad(unpacked[16]-90) # Revolute 6
-    dof_angles[6] = np.deg2rad(unpacked[17]-90) # Revolute 7
+    dof_angles[4] = np.deg2rad(unpacked[18]-180)  # Revolute 5
+    dof_angles[5] = np.deg2rad(unpacked[16]-90)  # Revolute 6
+    dof_angles[6] = np.deg2rad(unpacked[17]-90)  # Revolute 7
     
     # dof_angles[7] is the fixed wrist joint, and shouldn't be animated
 
     # dof_angles[8] is base of thumb
-
+    dof_angles[8] = np.deg2rad(unpacked[13])  # Revolute 9
     
-    # TBD - The math coming out of the demo controller for these joints is wrong
-    # They are disabled for now.
+    # TBD - The math coming out of the demo controller for these joints 
+    # is wrong. They are disabled for now.
     # 9,10,11,12 are the base of the fingers
-    #dof_angles[9] = np.deg2rad(unpacked[1]-90) # Revolute 14
-    #dof_angles[10] = np.deg2rad(unpacked[4]-90) # Revolute 18
-    #dof_angles[11] = np.deg2rad(90-unpacked[7]) # Revolute 22
-    #dof_angles[12] = np.deg2rad(90-unpacked[10]) # Revolute 26
+    # dof_angles[9] = np.deg2rad(unpacked[1]-90) # Revolute 14
+    # dof_angles[10] = np.deg2rad(unpacked[4]-90) # Revolute 18
+    # dof_angles[11] = np.deg2rad(90-unpacked[7]) # Revolute 22
+    # dof_angles[12] = np.deg2rad(90-unpacked[10]) # Revolute 26
     
-    #dof_angles[13] is thumb roll
+    # dof_angles[13] is thumb roll
+    dof_angles[13] = np.deg2rad(unpacked[13])  # Revolute 10
 
-    #dof_angles[14-17] are first knuckle joints
+    # dof_angles[14-17] are first knuckle joints
     dof_angles[14] = np.deg2rad(180-unpacked[0])    # Revolute 15
     dof_angles[15] = np.deg2rad(180-unpacked[3])    # Revolute 19
     dof_angles[16] = np.deg2rad(180-unpacked[6])    # Revolute 23
     dof_angles[17] = np.deg2rad(180-unpacked[9])     # Revolute 27
 
-    #dof_angles[19-22] are second knuckle joints
+    # dof_angles[18] is thumb first joint
+    dof_angles[18] = np.deg2rad(180-unpacked[12])  # Revolute 11
+
+    # dof_angles[19-22] are second knuckle joints
     dof_angles[19] = np.deg2rad(180-unpacked[2])    # Revolute 16
     dof_angles[20] = np.deg2rad(180-unpacked[5])    # Revolute 20
     dof_angles[21] = np.deg2rad(180-unpacked[8])    # Revolute 24
     dof_angles[22] = np.deg2rad(unpacked[11]-180)     # Revolute 28 - Angular inversion in the model for some reason?
 
-
-    #dof_angles[23] is thumb first joint
-
-    #dof_angles[24-27] are finger tips - driven from same angles as second knuckles
+    # dof_angles[23] is thumb second joint
+    dof_angles[23] = np.deg2rad(180-unpacked[14])  # Revolute 12
+    
+    # dof_angles[24-27] are finger tips - driven from same angles as second knuckles
     dof_angles[24] = np.deg2rad(180-unpacked[2])    # Revolute 17
     dof_angles[25] = np.deg2rad(180-unpacked[5])    # Revolute 21
     dof_angles[26] = np.deg2rad(180-unpacked[8])    # Revolute 25
     dof_angles[27] = np.deg2rad(unpacked[11]-180)     # Revolute 29 - Angular inversion in the model for some reason?
 
+    # dof_angles[28] is thumb tip - driven from same angle as thumb first joint
+    dof_angles[28] = np.deg2rad(180-unpacked[14])  # Revolute 13
 
-    #dof_angles[28] is thumb tip (also rotates backwards)
-
-
-    #print('Thumb tip', np.rad2deg(dof_angles[11]))
-    #print("{0} {1} {2} {3}".format(
-    #    np.rad2deg(dof_angles[24]), 
-    #    np.rad2deg(dof_angles[25]), 
-    #    np.rad2deg(dof_angles[26]),
-    #    np.rad2deg(dof_angles[27])))
-
-    #print(unpacked)
-
-
-
+ 
 host = '127.0.0.1'
 port = 65432
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
