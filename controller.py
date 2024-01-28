@@ -347,79 +347,89 @@ def drawDebugViews(results, hand_points, hcp, hncp, hand_points_norm):
     drawDebugViews.views_moved = True
 
 
-def transmit_angles_serial(ser,joint_angles):
-  # This code is basically verbatim from the original demo
+def transmit_angles_serial(ser,xmit_angles):
 
-  # Generate checksum
-  sum = np.sum(joint_angles)
-  sum = sum & 0x000000FF
-  t_xchecksum = 255 - sum
-  #print(sum, t_xchecksum)
+  # Transmit right arm (0) and then left arm (1)
+  for arm in range(2):
+    
+    joint_angles = xmit_angles[arm]
 
-  # Initialise bus with two A
-  command = B'\xFE'
-  ser.write(command)
-  ser.write(command)
-  packed_data = struct.pack('23B', *joint_angles)
-  ser.write(packed_data)
-  #packed_data = struct.pack('B', t_xchecksum)
-  #ser.write(packed_data)
-  #ser.flushOutput()
+    # This code is basically verbatim from the original demo
 
-  #print(ser.out_waiting)
+    # Generate checksum
+    sum = np.sum(joint_angles)
+    sum = sum & 0x000000FF
+    t_xchecksum = 255 - sum
+    #print(sum, t_xchecksum)
 
-  #time.sleep(delay)
+    # Initialise bus with two A
+    command = B'\xFE'
+    ser.write(command)
+    ser.write(command)
 
+    # Write a 0 for right arm, and 0x80 for left arm
+    ser.write(0x80 * arm)
 
+    packed_data = struct.pack('23B', *joint_angles)
+    ser.write(packed_data)
+    #packed_data = struct.pack('B', t_xchecksum)
+    #ser.write(packed_data)
+    #ser.flushOutput()
 
-  #packed_data = struct.pack('2B', joint_angles[0], joint_angles[1])
-  #ser.write(packed_data)
-  #ser.flushOutput()
+    #print(ser.out_waiting)
 
-  #time.sleep(delay)
-
-  #packed_data = struct.pack('2B', joint_angles[2], joint_angles[3])
-  #ser.write(packed_data)
-  #ser.flushOutput()
-  #time.sleep(delay)
-
-  #packed_data = struct.pack('2B', joint_angles[4], joint_angles[5])
-  #ser.write(packed_data)
-  #ser.flushOutput()
-  #time.sleep(delay)
-
-  #packed_data = struct.pack('2B', joint_angles[6], joint_angles[7])
-  #ser.write(packed_data)
-  #ser.flushOutput()
-  #time.sleep(delay)
-
-  #packed_data = struct.pack('2B', joint_angles[8], joint_angles[9])
-  #ser.write(packed_data)
-  #ser.flushOutput()
-  #time.sleep(delay)
-
-  #packed_data = struct.pack('2B', joint_angles[10], joint_angles[11])
-  #ser.write(packed_data)
-  #ser.flushOutput()
-  #time.sleep(delay)
-
-  #packed_data = struct.pack('2B', joint_angles[12], joint_angles[13])
-  #ser.write(packed_data)
-  #ser.flushOutput()
-  #time.sleep(delay)
-
-  #packed_data = struct.pack('2B', joint_angles[14], joint_angles[15])
-  #ser.write(packed_data)
-  #ser.flushOutput()
-  #time.sleep(delay)
+    #time.sleep(delay)
 
 
 
-  # End bus with check sum and two B
-  ser.write(struct.pack('B', t_xchecksum))
-  command = B'\xFD'
-  ser.write(command)
-  ser.write(command)
+    #packed_data = struct.pack('2B', joint_angles[0], joint_angles[1])
+    #ser.write(packed_data)
+    #ser.flushOutput()
+
+    #time.sleep(delay)
+
+    #packed_data = struct.pack('2B', joint_angles[2], joint_angles[3])
+    #ser.write(packed_data)
+    #ser.flushOutput()
+    #time.sleep(delay)
+
+    #packed_data = struct.pack('2B', joint_angles[4], joint_angles[5])
+    #ser.write(packed_data)
+    #ser.flushOutput()
+    #time.sleep(delay)
+
+    #packed_data = struct.pack('2B', joint_angles[6], joint_angles[7])
+    #ser.write(packed_data)
+    #ser.flushOutput()
+    #time.sleep(delay)
+
+    #packed_data = struct.pack('2B', joint_angles[8], joint_angles[9])
+    #ser.write(packed_data)
+    #ser.flushOutput()
+    #time.sleep(delay)
+
+    #packed_data = struct.pack('2B', joint_angles[10], joint_angles[11])
+    #ser.write(packed_data)
+    #ser.flushOutput()
+    #time.sleep(delay)
+
+    #packed_data = struct.pack('2B', joint_angles[12], joint_angles[13])
+    #ser.write(packed_data)
+    #ser.flushOutput()
+    #time.sleep(delay)
+
+    #packed_data = struct.pack('2B', joint_angles[14], joint_angles[15])
+    #ser.write(packed_data)
+    #ser.flushOutput()
+    #time.sleep(delay)
+
+
+
+    # End bus with check sum and two B
+    ser.write(struct.pack('B', t_xchecksum))
+    command = B'\xFD'
+    ser.write(command)
+    ser.write(command)
 
   #time.sleep(delay)
 
