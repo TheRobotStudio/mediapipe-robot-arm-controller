@@ -1,5 +1,5 @@
 # Configuration
-USDPath = "C:/Dev/mediapipe-robot-arm-controller-trs/isaac-sim/Collected_HOPE1_02/HOPE1_02.usd"
+USDPath = "/home/tshumay/Dev/mediapipe-robot-arm-controller/isaac-sim/Collected_HOPE1_02/HOPE1_02.usd"
 
 
 #launch Isaac Sim before any other imports
