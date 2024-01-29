@@ -810,7 +810,7 @@ with mp_holistic.Holistic(
     if (data_updated):
       
       # Apply low pass filter
-      joint_angles[arm] = (1.0-args.lpf_value)*prev_joint_angles[arm] + args.lpf_value*joint_angles[arm]
+      joint_angles = (1.0-args.lpf_value)*prev_joint_angles + args.lpf_value*joint_angles
 
       # Send updated serial data
       serial_timer_transmit(args.serial_fps, ser, joint_angles)
