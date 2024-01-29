@@ -363,8 +363,11 @@ def transmit_angles_serial(ser,arm,joint_angles):
   ser.write(command)
 
   # Write a 0 for right arm, and 0x80 for left arm
-  ser.write(0x80 * arm)
-
+  if (arm == 0):
+    ser.write(B'\x00')
+  else:
+    ser.write(B'\x80')
+  
   packed_data = struct.pack('23B', *joint_angles)
   ser.write(packed_data)
   #packed_data = struct.pack('B', t_xchecksum)
@@ -438,8 +441,9 @@ hold_arm_angles = False
 
 # Periodic serial transmit function - maintains a maximum transmit rate
 # specified in arguments to the program
+xmit_arm = 0  # We alternate between arms on serial transmissions
 def serial_timer_transmit(fps, ser, joint_angles):
-
+  global xmit_arm
   global serial_timestamp
   global serial_muted
 
@@ -447,19 +451,20 @@ def serial_timer_transmit(fps, ser, joint_angles):
 
   if (time.time() - serial_timestamp) > serial_period:
   
-    for arm in range(2):
-      xmit_angles = np.clip(joint_angles[arm].astype(int), 0, 255) # Clip to 8 bit values
-  
-      if (not args.disable_serial and not serial_muted):
-        transmit_angles_serial(ser,arm,xmit_angles)
+    xmit_angles = np.clip(joint_angles[xmit_arm].astype(int), 0, 255) # Clip to 8 bit values
 
-      print("Arm: ", arm)
-      print(xmit_angles)
-      
+    if (not args.disable_serial and not serial_muted):
+      transmit_angles_serial(ser,xmit_arm,xmit_angles)
+
+    print("Arm: ", xmit_arm)
+    print(xmit_angles)
+    
     print("Serial FPS: ", 1.0/(time.time()-serial_timestamp))
 
     # Reset timer    
     serial_timestamp = time.time()
+
+    xmit_arm = 1 - xmit_arm # Toggle between arms
 
 
 # Periodic serial transmit function - maintains a maximum transmit rate
